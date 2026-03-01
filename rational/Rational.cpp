@@ -1,6 +1,8 @@
 #include "Rational.h"
 #include <iostream>
 #include <cmath>
+using namespace std;
+
 Rational::Rational() {
 	num = 0;
 	den = 1;
@@ -9,7 +11,7 @@ Rational::Rational(int n) {
 	num = n;
 	den = 1;
 }
-Rational::Rational(int n,int d) {
+Rational::Rational(int n, int d) {
 	num = n;
 	den = d;
 }
@@ -59,6 +61,7 @@ double Rational::toDouble() const {
 	return static_cast<double>(num) / den;
 }
 void KvUrav(const Rational& a, const Rational& b, const Rational& c) {
+	setlocale(LC_ALL, "Russian");
 	double a2 = a.toDouble();
 	double b2 = b.toDouble();
 	double c2 = c.toDouble();
@@ -75,7 +78,7 @@ void KvUrav(const Rational& a, const Rational& b, const Rational& c) {
 		double x1 = (-b2 + sqrtD) / (2 * a2);
 		double x2 = (-b2 - sqrtD) / (2 * a2);
 		cout << "Два корня:";
-		cout << "x1 = " << x1;
+		cout << "x1 = " << x1 << endl;
 		cout << "x2 = " << x2;
 	}
 }

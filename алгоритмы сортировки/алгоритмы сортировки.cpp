@@ -21,7 +21,6 @@ void InsertionSort(int* arr, int size) {
 }
 void HeapSort(int* arr, int size) {
     auto start = high_resolution_clock::now();
-
     for (int i = size / 2 - 1; i >= 0; i--) {
         int root = i;
         while (2 * root + 1 < size) {
@@ -41,7 +40,6 @@ void HeapSort(int* arr, int size) {
         int tmp = arr[0];
         arr[0] = arr[i];
         arr[i] = tmp;
-
         int root = 0;
         while (2 * root + 1 < i) {
             int child = 2 * root + 1;
@@ -63,7 +61,6 @@ void HeapSort(int* arr, int size) {
 void QuickSortRec(int* arr, int first, int last) {
     int i = first, j = last;
     int pivot = arr[(first + last) / 2];
-
     while (i <= j) {
         while (arr[i] < pivot) i++;
         while (arr[j] > pivot) j--;
@@ -75,11 +72,9 @@ void QuickSortRec(int* arr, int first, int last) {
             j--;
         }
     }
-
     if (first < j) QuickSortRec(arr, first, j);
     if (i < last) QuickSortRec(arr, i, last);
 }
-
 void QuickSort(int* arr, int size) {
     auto start = high_resolution_clock::now();
     QuickSortRec(arr, 0, size - 1);
@@ -121,7 +116,6 @@ void BucketSort(int* arr, int n) {
 }
 void MergeSort(int arr[], int size) {
     auto start = high_resolution_clock::now();
-
     for (int block = 1; block < size; block *= 2) {
         for (int j = 0; j < size - block; j += 2 * block) {
             int lb = j;

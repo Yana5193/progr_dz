@@ -3,10 +3,10 @@
 using namespace std;
 int main()
 {
-    Rational a(1,2);
-    Rational b(3, 2);
-    Rational c(1,1);
+    Rational a(2, 1);
+    Rational b(-3, 1);
+    Rational c(-2, 1);
 
-    void KvUrav(a, b, c);
+    KvUrav(a, b, c);
 }
 
