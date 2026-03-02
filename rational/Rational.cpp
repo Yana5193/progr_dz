@@ -16,8 +16,15 @@ Rational::Rational(int n, int d) {
 	den = d;
 }
 void Rational::simplify() {
-
-
+	if (den < 0) {
+		num = -num;
+		den = -den;
+	}
+	int del = gcd(num, den);
+	if (del > 1) {
+		num /= del;
+		den /= del;
+	}
 }
 Rational& Rational::operator+=(const Rational& r) {
 	num = num * r.den + den * r.num;
@@ -60,25 +67,60 @@ Rational Rational::operator/(const Rational& r) const {
 double Rational::toDouble() const {
 	return static_cast<double>(num) / den;
 }
+bool Rational::operator==(const Rational& r) const {
+	int leftNum = num * r.den;
+	int rightNum = r.num * den;
+	return (leftNum == rightNum);
+}
+bool Rational::operator!=(const Rational& r) const {
+	return !(*this == r);
+}
+bool Rational::operator<(const Rational& r) const {
+	int leftNum = num * r.den;
+	int rightNum = r.num * den;
+	return (leftNum < rightNum);
+}
+bool Rational::operator<=(const Rational& r) const {
+	return (*this < r || *this == r);
+}
+bool Rational::operator>(const Rational& r) const {
+	int leftNum = num * r.den;
+	int rightNum = r.num * den;
+	return (leftNum > rightNum);
+}
+bool Rational::operator>=(const Rational& r) const {
+	return (*this > r || *this == r);
+}
+bool isPerfectSquare(int n) {
+	if (n < 0) return false;
+	int root = (int)sqrt(n);
+	return root * root == n;
+}
 void KvUrav(const Rational& a, const Rational& b, const Rational& c) {
 	setlocale(LC_ALL, "Russian");
-	double a2 = a.toDouble();
-	double b2 = b.toDouble();
-	double c2 = c.toDouble();
-	double D = b2 * b2 - 4 * a2 * c2;
-	if (D < 0) {
-		cout << "Нет корней";
+	Rational D = b * b - Rational(4) * a * c;
+	if (D < Rational(0)) {
+		cout << "Нет корней" << endl;
 	}
-	else if (D == 0) {
-		cout << "Существует один корень";
-		double x = -b2 / (2 * a2);
+	else if (D == Rational(0)) {
+		Rational x = Rational(0) - b / (Rational(2) * a);
+		cout << "x = " << x << endl;
 	}
 	else {
-		double sqrtD = sqrt(D);
-		double x1 = (-b2 + sqrtD) / (2 * a2);
-		double x2 = (-b2 - sqrtD) / (2 * a2);
-		cout << "Два корня:";
-		cout << "x1 = " << x1 << endl;
-		cout << "x2 = " << x2;
+		if (isPerfectSquare(D.num) && isPerfectSquare(D.den)) {
+			int sqrtNum = (int)sqrt(D.num);
+			int sqrtDen = (int)sqrt(D.den);
+			Rational sqrtD(sqrtNum, sqrtDen);
+
+			Rational x1 = (Rational(0) - b + sqrtD) / (Rational(2) * a);
+			Rational x2 = (Rational(0) - b - sqrtD) / (Rational(2) * a);
+
+			cout << "x1 = " << x1 << endl;
+			cout << "x2 = " << x2 << endl;
+		}
+		else {
+			cout << "Корни иррациональны" << endl;
+		}
+	}
 	}
 }
