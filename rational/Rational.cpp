@@ -1,126 +1,215 @@
 #include "Rational.h"
-#include <iostream>
 #include <cmath>
+#include <cstring>
+
 using namespace std;
 
-Rational::Rational() {
-	num = 0;
-	den = 1;
+int gcd_int(int a, int b) {
+    a = abs(a);
+    b = abs(b);
+
+    if (a == 0) return b;
+    if (b == 0) return a;
+
+    while (b != 0) {
+        int t = b;
+        b = a % b;
+        a = t;
+    }
+    return a;
 }
-Rational::Rational(int n) {
-	num = n;
-	den = 1;
-}
+
+Rational::Rational() : num(0), den(1) {}
+
+Rational::Rational(int n) : num(n), den(1) {}
+
 Rational::Rational(int n, int d) {
-	num = n;
-	den = d;
+    if (d == 0) {
+        num = 0;
+        den = 1;
+    }
+    else {
+        num = n;
+        den = d;
+        simplify();
+    }
 }
-void Rational::simplify() {
-	if (den < 0) {
-		num = -num;
-		den = -den;
-	}
-	int del = gcd(num, den);
-	if (del > 1) {
-		num /= del;
-		den /= del;
-	}
+
+Rational& Rational::simplify() {
+    if (den == 0) {
+        num = 0;
+        den = 1;
+        return *this;
+    }
+
+    if (den < 0) {
+        num = -num;
+        den = -den;
+    }
+
+    long long g = gcd_int(num, den);
+
+    if (g != 0) {
+        num /= g;
+        den /= g;
+    }
+
+    return *this;
 }
+
 Rational& Rational::operator+=(const Rational& r) {
-	num = num * r.den + den * r.num;
-	den = den * r.den;
-	simplify();
-	return (*this);
+    num = num * r.den + den * r.num;
+    den = den * r.den;
+    return simplify();
 }
+
 Rational Rational::operator+(const Rational& r) const {
-	Rational R(*this);
-	return R += r;
+    Rational t(*this);
+    return t += r;
 }
+
 Rational& Rational::operator-=(const Rational& r) {
-	num = num * r.den - den * r.num;
-	den = den * r.den;
-	simplify();
-	return *this;
+    num = num * r.den - den * r.num;
+    den = den * r.den;
+    return simplify();
 }
+
 Rational Rational::operator-(const Rational& r) const {
-	Rational result(*this);
-	return result -= r;
+    Rational t(*this);
+    return t -= r;
 }
+
 Rational& Rational::operator*=(const Rational& r) {
-	num *= r.num;
-	den *= r.den;
-	simplify();
-	return *this;
+    num *= r.num;
+    den *= r.den;
+    return simplify();
 }
+
 Rational Rational::operator*(const Rational& r) const {
-	return Rational(num * r.num, den * r.den);
+    return Rational(num * r.num, den * r.den);
 }
+
 Rational& Rational::operator/=(const Rational& r) {
-	num *= r.den;
-	den *= r.num;
-	simplify();
-	return *this;
+    if (r.num == 0) {
+        cout << "Ошибка: деление на ноль!" << endl;
+        num = 0;
+        den = 1;
+        return *this;
+    }
+
+    num *= r.den;
+    den *= r.num;
+
+    return simplify();
 }
+
 Rational Rational::operator/(const Rational& r) const {
-	return Rational(num * r.den, den * r.num);
+    if (r.num == 0) {
+        cout << "Ошибка: деление на ноль!" << endl;
+        return Rational(0, 1);
+    }
+    return Rational(num * r.den, den * r.num);
+}
+
+
+bool Rational::operator==(const Rational& r) const {
+    return (long long)num * r.den == (long long)r.num * den;
+}
+
+bool Rational::operator!=(const Rational& r) const {
+    return !(*this == r);
+}
+
+bool Rational::operator<(const Rational& r) const {
+    return (long long)num * r.den < (long long)r.num * den;
+}
+
+bool Rational::operator<=(const Rational& r) const {
+    return *this < r || *this == r;
+}
+
+bool Rational::operator>(const Rational& r) const {
+    return (long long)num * r.den > (long long)r.num * den;
+}
+
+bool Rational::operator>=(const Rational& r) const {
+    return *this > r || *this == r;
 }
 double Rational::toDouble() const {
-	return static_cast<double>(num) / den;
+    return static_cast<double>(num) / den;
 }
-bool Rational::operator==(const Rational& r) const {
-	int leftNum = num * r.den;
-	int rightNum = r.num * den;
-	return (leftNum == rightNum);
+
+Rational Rational::fromDouble(double d) {
+    if (fabs(d) < 1e-12)
+        return Rational(0, 1);
+    bool negative = d < 0;
+    d = fabs(d);
+    uint64_t bits;
+    memcpy(&bits, &d, sizeof(double));
+
+    int exp = (bits >> 52) & 0x7FF;
+    uint64_t mant = bits & ((1ULL << 52) - 1);
+
+    if (exp == 0x7FF)
+        return Rational(0, 1);
+
+    if (exp == 0)
+        return Rational((int)(d * 1e6), 1000000);
+
+    mant |= (1ULL << 52);
+
+    int shift = exp - 1023 - 52;
+
+    long long num = (long long)mant;
+    long long den = 1;
+
+    if (shift >= 0)
+        num <<= shift;
+    else
+        den <<= -shift;
+
+    long long g = gcd_int(num, den);
+
+    if (g != 0) {
+        num /= g;
+        den /= g;
+    }
+    while (num > INT32_MAX || den > INT32_MAX) {
+        num /= 2;
+        den /= 2;
+    }
+
+    if (negative)
+        num = -num;
+
+    return Rational((int)num, (int)den);
 }
-bool Rational::operator!=(const Rational& r) const {
-	return !(*this == r);
-}
-bool Rational::operator<(const Rational& r) const {
-	int leftNum = num * r.den;
-	int rightNum = r.num * den;
-	return (leftNum < rightNum);
-}
-bool Rational::operator<=(const Rational& r) const {
-	return (*this < r || *this == r);
-}
-bool Rational::operator>(const Rational& r) const {
-	int leftNum = num * r.den;
-	int rightNum = r.num * den;
-	return (leftNum > rightNum);
-}
-bool Rational::operator>=(const Rational& r) const {
-	return (*this > r || *this == r);
-}
-bool isPerfectSquare(int n) {
-	if (n < 0) return false;
-	int root = (int)sqrt(n);
-	return root * root == n;
-}
+
 void KvUrav(const Rational& a, const Rational& b, const Rational& c) {
-	setlocale(LC_ALL, "Russian");
-	Rational D = b * b - Rational(4) * a * c;
-	if (D < Rational(0)) {
-		cout << "��� ������" << endl;
-	}
-	else if (D == Rational(0)) {
-		Rational x = Rational(0) - b / (Rational(2) * a);
-		cout << "x = " << x << endl;
-	}
-	else {
-		if (isPerfectSquare(D.num) && isPerfectSquare(D.den)) {
-			int sqrtNum = (int)sqrt(D.num);
-			int sqrtDen = (int)sqrt(D.den);
-			Rational sqrtD(sqrtNum, sqrtDen);
+    double A = a.toDouble();
+    double B = b.toDouble();
+    double C = c.toDouble();
 
-			Rational x1 = (Rational(0) - b + sqrtD) / (Rational(2) * a);
-			Rational x2 = (Rational(0) - b - sqrtD) / (Rational(2) * a);
+    cout << "Уравнение: " << a << "x^2 + " << b << "x + " << c << " = 0\n";
+    double D = B * B - 4.0 * A * C;
+    cout << "Дискриминант равен = " << D << endl;
+    if (D < 0) {
+        cout << "Нет действительных корней\n";
+        return;
+    }
+    double sqrtD = sqrt(D);
+    if (fabs(D) < 1e-12) {
+        cout << "x=" << Rational::fromDouble(-B / (2.0 * A)) << endl;
+    }
+    else {
+        cout << "x1=" << Rational::fromDouble((-B + sqrtD) / (2.0 * A)) << endl;
+        cout << "x2=" << Rational::fromDouble((-B - sqrtD) / (2.0 * A)) << endl;
+    }
+}
 
-			cout << "x1 = " << x1 << endl;
-			cout << "x2 = " << x2 << endl;
-		}
-		else {
-			cout << "����� �������������" << endl;
-		}
-	}
-	}
+ostream& operator<<(ostream& os, const Rational& r) {
+    if (r.den == 1) os << r.num;
+    else if (r.num == 0) os << 0;
+    else os << r.num << "/" << r.den;
+    return os;
 }
