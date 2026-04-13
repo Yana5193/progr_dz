@@ -138,49 +138,84 @@ bool Rational::operator>=(const Rational& r) const {
 double Rational::toDouble() const {
     return static_cast<double>(num) / den;
 }
+long long gcd_ll(long long a, long long b) {
+    a = llabs(a);
+    b = llabs(b);
+    while (b != 0) {
+        long long t = b;
+        b = a % b;
+        a = t;
+    }
+    return a == 0 ? 1 : a;
+}
 
 Rational Rational::fromDouble(double d) {
     if (fabs(d) < 1e-12)
         return Rational(0, 1);
+
     bool negative = d < 0;
     d = fabs(d);
+
     uint64_t bits;
     memcpy(&bits, &d, sizeof(double));
 
     int exp = (bits >> 52) & 0x7FF;
     uint64_t mant = bits & ((1ULL << 52) - 1);
 
-    if (exp == 0x7FF)
-        return Rational(0, 1);
+    if (exp == 0x7FF) return Rational(0, 1);
 
-    if (exp == 0)
-        return Rational((int)(d * 1e6), 1000000);
-
-    mant |= (1ULL << 52);
-
-    int shift = exp - 1023 - 52;
-
-    long long num = (long long)mant;
+    long long num = mant;
     long long den = 1;
 
-    if (shift >= 0)
-        num <<= shift;
-    else
-        den <<= -shift;
+    if (exp == 0) {
+        den = 1LL << 52;
+    }
+    else {
+        num |= (1ULL << 52);
+        int shift = exp - 1023 - 52;
 
-    long long g = gcd_int(num, den);
+        if (shift >= 0)
+            num <<= shift;
+        else
+            den <<= -shift;
+    }
 
-    if (g != 0) {
+    long long g = gcd_ll(num, den);
+    if (g > 0) {
         num /= g;
         den /= g;
     }
-    while (num > INT32_MAX || den > INT32_MAX) {
+
+    while ((num > INT32_MAX || den > INT32_MAX) && den > 1) {
         num /= 2;
         den /= 2;
     }
 
-    if (negative)
-        num = -num;
+    long long best_num = num;
+    long long best_den = den;
+    double best_error = 1e9;
+
+    for (long long test_den = 1; test_den <= 1000000; ++test_den) {
+        long long test_num = (long long)round(d * test_den);
+        double err = fabs(d - static_cast<double>(test_num) / test_den);
+
+        if (err < best_error) {
+            best_error = err;
+            best_num = test_num;
+            best_den = test_den;
+        }
+
+        if (best_error < 1e-10) break;
+    }
+
+    if (negative) best_num = -best_num;
+
+    if (best_error < 1e-9 || best_den < den / 2) {
+        return Rational((int)best_num, (int)best_den);
+    }
+
+    if (num > INT32_MAX || den > INT32_MAX || den <= 0)
+        return Rational(0, 1);
 
     return Rational((int)num, (int)den);
 }
